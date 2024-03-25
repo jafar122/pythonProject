@@ -1,0 +1,51 @@
+version: '3.7'
+
+services:
+  redis:
+    image: redis:latest
+    command: redis-server
+    environment:
+      REDIS_PASSWORD: myredispassword
+    restart: on-failure
+    ports:
+      - "6379:6379"
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: mydatabase
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: on-failure
+    ports:
+      - "5432:5432"
+
+  migration:
+    build:
+      context: C:\Users\User\Desktop\python\pythonProject\jafar
+      dockerfile: Dockerfile
+    command: python migrate_script.py
+    volumes:
+      - ./migrate_script.py:/migrate_script.py
+      - ./example.db:/example.db
+    depends_on:
+      - db
+      - redis
+
+  bot:
+    build:
+      context: C:\Users\User\Desktop\python\pythonProject
+      dockerfile: jafar\Dockerfile
+    command: python -m bot
+    environment:
+      BOT_TOKEN: mybottoken
+    restart: always
+    depends_on:
+      - db
+      - redis
+      - migration
+
+volumes:
+  pgdata:
